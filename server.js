@@ -554,4 +554,68 @@ app.get('/admin/withdrawals', async (req, res) => {
     }
 });
 
+// ===========================================
+// 👑 ADMIN PORTAL ROUTES (Add these to server.js)
+// ===========================================
+
+// 1. Get ALL Orders (for Admin Dashboard)
+app.get('/admin/orders', async (req, res) => {
+    try {
+        // Fetch all orders, sorted by newest first
+        const orders = await Order.find().sort({ date: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error fetching orders" });
+    }
+});
+
+// 2. Get ALL Drivers (for Fleet Management)
+app.get('/admin/drivers', async (req, res) => {
+    try {
+        // Assuming your driver collection is named 'User' and drivers have role='driver'
+        // If you have a separate 'Driver' model, change 'User' to 'Driver'
+        const drivers = await User.find({ role: 'driver' }); 
+        res.json(drivers);
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error fetching drivers" });
+    }
+});
+
+// 3. Get Withdrawal Requests (for Payouts)
+app.get('/admin/withdrawals', async (req, res) => {
+    try {
+        // If you don't have a Withdrawal model yet, return empty array to prevent 404
+        // const withdrawals = await Withdrawal.find().sort({ date: -1 });
+        res.json([]); // Returning empty array for now so app doesn't crash
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error fetching withdrawals" });
+    }
+});
+
+// 4. Update Order Status (Accept, Cook, Deliver)
+app.post('/admin/order-status', async (req, res) => {
+    const { orderId, status } = req.body;
+    try {
+        await Order.findByIdAndUpdate(orderId, { status: status });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// 5. Assign Driver to Order
+app.post('/admin/assign-driver', async (req, res) => {
+    const { orderId, driverId, driverName } = req.body;
+    try {
+        await Order.findByIdAndUpdate(orderId, { 
+            driverId: driverId,
+            driverName: driverName,
+            status: 'Out for Delivery' // Auto-update status when assigned
+        });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
