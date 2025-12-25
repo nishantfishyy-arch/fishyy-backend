@@ -18,8 +18,8 @@ app.use(bodyParser.json());
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/seafoodApp';
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected!"))
-  .catch((err) => console.log("❌ Connection Error:", err));
+    .then(() => console.log("✅ MongoDB Connected!"))
+    .catch((err) => console.log("❌ Connection Error:", err));
 
 // --- 2. Define Schemas ---
 
@@ -57,12 +57,12 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     mobile: { type: String, default: "" },
     profilePic: { type: String, default: "" },
-    location: { 
-        type: { type: String, default: "Point" }, 
-        coordinates: { type: [Number], default: [0, 0] } 
+    location: {
+        type: { type: String, default: "Point" },
+        coordinates: { type: [Number], default: [0, 0] }
     },
     addresses: [{
-        label: String, 
+        label: String,
         street: String,
         city: String,
         zip: String,
@@ -70,7 +70,7 @@ const UserSchema = new mongoose.Schema({
         phone: String
     }]
 });
-UserSchema.index({ location: "2dsphere" }); 
+UserSchema.index({ location: "2dsphere" });
 const User = mongoose.model('User', UserSchema);
 
 // 🐟 Product Schema
@@ -90,15 +90,15 @@ const Product = mongoose.model('Product', ProductSchema);
 const OrderSchema = new mongoose.Schema({
     userId: String,
     userEmail: String,
-    items: Array, 
+    items: Array,
     totalAmount: Number,
-    address: Object, 
-    paymentMethod: String, 
-    status: { type: String, default: "Placed" }, 
+    address: Object,
+    paymentMethod: String,
+    status: { type: String, default: "Placed" },
     date: { type: Date, default: Date.now },
-    driverId: { type: String, default: null }, 
+    driverId: { type: String, default: null },
     driverName: { type: String, default: null },
-    driverLocation: { 
+    driverLocation: {
         latitude: Number,
         longitude: Number
     }
@@ -109,52 +109,52 @@ const Order = mongoose.model('Order', OrderSchema);
 
 // --- 👤 USER ROUTES ---
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email, password });
-    if (user) res.json({ success: true, user: user });
-    else res.status(401).json({ success: false, message: "Invalid credentials" });
-  } catch (error) { res.status(500).json({ success: false, message: "Server Error" }); }
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email, password });
+        if (user) res.json({ success: true, user: user });
+        else res.status(401).json({ success: false, message: "Invalid credentials" });
+    } catch (error) { res.status(500).json({ success: false, message: "Server Error" }); }
 });
 
 app.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ success: false, message: "Email already registered" });
-    const newUser = new User({ name, email, password, location: { type: "Point", coordinates: [0, 0] } });
-    await newUser.save();
-    res.json({ success: true, message: "Registration successful!" });
-  } catch (error) { res.status(500).json({ success: false, message: "Server Error" }); }
+    const { name, email, password } = req.body;
+    try {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ success: false, message: "Email already registered" });
+        const newUser = new User({ name, email, password, location: { type: "Point", coordinates: [0, 0] } });
+        await newUser.save();
+        res.json({ success: true, message: "Registration successful!" });
+    } catch (error) { res.status(500).json({ success: false, message: "Server Error" }); }
 });
 
 app.put('/update-profile', async (req, res) => {
-  const { email, name, mobile, password, profilePic } = req.body;
-  try {
-    let updateFields = {};
-    if (name) updateFields.name = name;
-    if (mobile) updateFields.mobile = mobile;
-    if (password) updateFields.password = password;
-    if (profilePic !== undefined) updateFields.profilePic = profilePic;
+    const { email, name, mobile, password, profilePic } = req.body;
+    try {
+        let updateFields = {};
+        if (name) updateFields.name = name;
+        if (mobile) updateFields.mobile = mobile;
+        if (password) updateFields.password = password;
+        if (profilePic !== undefined) updateFields.profilePic = profilePic;
 
-    const updatedUser = await User.findOneAndUpdate({ email }, { $set: updateFields }, { new: true });
-    if (updatedUser) res.json({ success: true, user: updatedUser });
-    else res.status(404).json({ success: false, message: "User not found" });
-  } catch (error) { res.status(500).json({ success: false, message: "Server Error" }); }
+        const updatedUser = await User.findOneAndUpdate({ email }, { $set: updateFields }, { new: true });
+        if (updatedUser) res.json({ success: true, user: updatedUser });
+        else res.status(404).json({ success: false, message: "User not found" });
+    } catch (error) { res.status(500).json({ success: false, message: "Server Error" }); }
 });
 
 app.post('/add-address/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    const { label, street, city, zip, country, phone } = req.body;
-    if (!street || !city || !zip || !phone) return res.status(400).json({ success: false, message: "Missing fields" });
+    try {
+        const { email } = req.params;
+        const { label, street, city, zip, country, phone } = req.body;
+        if (!street || !city || !zip || !phone) return res.status(400).json({ success: false, message: "Missing fields" });
 
-    const newAddress = { label, street, city, zip, country, phone };
-    const updatedUser = await User.findOneAndUpdate({ email: email }, { $push: { addresses: newAddress } }, { new: true });
-    if (!updatedUser) return res.status(404).json({ success: false, message: "User not found" });
+        const newAddress = { label, street, city, zip, country, phone };
+        const updatedUser = await User.findOneAndUpdate({ email: email }, { $push: { addresses: newAddress } }, { new: true });
+        if (!updatedUser) return res.status(404).json({ success: false, message: "User not found" });
 
-    res.json({ success: true, message: "Address added", user: updatedUser });
-  } catch (error) { res.status(500).json({ success: false, message: "Server error" }); }
+        res.json({ success: true, message: "Address added", user: updatedUser });
+    } catch (error) { res.status(500).json({ success: false, message: "Server error" }); }
 });
 
 app.put('/update-address/:email', async (req, res) => {
@@ -170,19 +170,19 @@ app.put('/update-address/:email', async (req, res) => {
 });
 
 app.delete('/delete-address/:email/:addressId', async (req, res) => {
-  try {
-    const { email, addressId } = req.params;
-    await User.findOneAndUpdate({ email: email }, { $pull: { addresses: { _id: addressId } } });
-    res.json({ success: true, message: "Address deleted" });
-  } catch (error) { res.status(500).json({ success: false, message: "Error deleting address" }); }
+    try {
+        const { email, addressId } = req.params;
+        await User.findOneAndUpdate({ email: email }, { $pull: { addresses: { _id: addressId } } });
+        res.json({ success: true, message: "Address deleted" });
+    } catch (error) { res.status(500).json({ success: false, message: "Error deleting address" }); }
 });
 
 app.get('/user/:email', async (req, res) => {
-  try {
-    const user = await User.findOne({ email: req.params.email });
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.json({ success: true, user: user });
-  } catch (error) { res.status(500).json({ success: false, message: "Error fetching user" }); }
+    try {
+        const user = await User.findOne({ email: req.params.email });
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        res.json({ success: true, user: user });
+    } catch (error) { res.status(500).json({ success: false, message: "Error fetching user" }); }
 });
 
 // --- 🛒 ORDER ROUTES ---
@@ -204,8 +204,8 @@ app.get('/track-order/:orderId', async (req, res) => {
         if (order.driverId) {
             const driver = await Driver.findById(order.driverId);
             if (driver && driver.location) {
-                 // Override the stale location in the order object with the fresh one
-                 order.driverLocation = driver.location; 
+                // Override the stale location in the order object with the fresh one
+                order.driverLocation = driver.location;
             }
         }
         res.json({ success: true, order });
@@ -213,18 +213,18 @@ app.get('/track-order/:orderId', async (req, res) => {
 });
 
 app.get('/my-orders/:email', async (req, res) => {
-  try {
-    const orders = await Order.find({ userEmail: req.params.email }).sort({ date: -1 });
-    res.json({ success: true, orders });
-  } catch (error) { res.status(500).json({ success: false, message: "Error fetching orders" }); }
+    try {
+        const orders = await Order.find({ userEmail: req.params.email }).sort({ date: -1 });
+        res.json({ success: true, orders });
+    } catch (error) { res.status(500).json({ success: false, message: "Error fetching orders" }); }
 });
 
 // --- 🐟 PRODUCT ROUTES ---
 app.get('/products', async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (error) { res.status(500).json({ message: "Error fetching products" }); }
+    try {
+        const products = await Product.find();
+        res.json(products);
+    } catch (error) { res.status(500).json({ message: "Error fetching products" }); }
 });
 
 app.post('/admin/add-product', async (req, res) => {
@@ -271,8 +271,20 @@ app.get('/driver/orders', async (req, res) => {
         const { currentDriverId } = req.query;
         const orders = await Order.find({
             $or: [
-                { status: 'Placed', driverId: { $exists: false } }, // New orders
-                { driverId: currentDriverId, status: { $in: ['Preparing', 'Out for Delivery'] } } // My orders
+                // 1. Unassigned Orders (Available to everyone)
+                {
+                    status: 'Placed',
+                    $or: [
+                        { driverId: null },
+                        { driverId: { $exists: false } },
+                        { driverId: "" }
+                    ]
+                },
+                // 2. Assigned to THIS driver (Resume/In-Progress)
+                {
+                    driverId: currentDriverId,
+                    status: { $in: ['Placed', 'Preparing', 'Out for Delivery'] }
+                }
             ]
         }).sort({ date: -1 });
         res.json({ success: true, orders });
@@ -280,9 +292,18 @@ app.get('/driver/orders', async (req, res) => {
 });
 
 app.post('/driver/accept', async (req, res) => {
-    const { orderId, driverId, driverName } = req.body;
-    await Order.findByIdAndUpdate(orderId, { driverId, driverName, status: 'Preparing' });
-    res.json({ success: true, message: "Order Accepted" });
+    const { orderId, driverId } = req.body;
+    try {
+        const driver = await Driver.findById(driverId);
+        if (!driver) return res.status(404).json({ success: false, message: "Driver not found" });
+
+        await Order.findByIdAndUpdate(orderId, {
+            driverId,
+            driverName: driver.name,
+            status: 'Preparing'
+        });
+        res.json({ success: true, message: "Order Accepted" });
+    } catch (error) { res.status(500).json({ success: false, message: "Error" }); }
 });
 
 app.post('/driver/update-order-status', async (req, res) => {
@@ -346,3 +367,4 @@ app.post('/admin/assign-driver', async (req, res) => {
 
 // Server Listen
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
